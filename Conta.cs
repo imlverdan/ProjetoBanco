@@ -9,8 +9,8 @@ namespace ProjetoBanco
 
         private decimal _saldoConta;
         public decimal SaldoConta => _saldoConta;
-        private DateTime UltimoDescontoTaxa { get; set; }
-        private decimal _rendimentoDiario;
+        
+        
         public TipoConta Tipo { get; set; }
         decimal IContaCorrente.TaxaManutencao { get; set; }
         decimal IContaPoupanca.TaxaRendimento { get; set; }
@@ -18,14 +18,13 @@ namespace ProjetoBanco
 
         private static readonly Random rand = new Random();
 
-        public Conta(TipoConta tipoConta)
+         public Conta(TipoConta tipoConta)
         {
             Tipo = tipoConta;
             ContaId = GerarIdAleatorio();
             NumeroConta = GerarNumeroContaAleatorio();
             _saldoConta = 0;
-            UltimoDescontoTaxa = DateTime.Today;
-            _rendimentoDiario = 0;
+            ((IContaCorrente)this).TaxaManutencao = 10;
         }
 
         private string GerarNumeroContaAleatorio()
@@ -47,46 +46,63 @@ namespace ProjetoBanco
 
         public void Transferir(decimal quantia)
         {
+            decimal taxaManutencao = 10;
+            decimal taxaAdicionalPoupanca = 5; 
 
-            _saldoConta -= quantia - quantia;
+            if (quantia <= 0)
+            {
+                throw new ArgumentException("O valor da quantia a transferir deve ser maior que zero.");
+            }
+
+            if (Tipo == TipoConta.ContaCorrente)
+            {
+                if (quantia + taxaManutencao > _saldoConta)
+                {
+                    throw new InvalidOperationException("Saldo insuficiente para realizar a transferência incluindo a taxa de manutenção.");
+                }
+
+                _saldoConta -= quantia - taxaManutencao;
+            }
+            else if (Tipo == TipoConta.ContaPoupanca)
+            {
+                if (quantia + taxaAdicionalPoupanca > _saldoConta)
+                {
+                    throw new InvalidOperationException("Saldo insuficiente para realizar a transferência incluindo a taxa adicional.");
+                }
+
+                _saldoConta -= quantia + taxaAdicionalPoupanca;
+            }
+
 
         }
 
 
         public void Depositar(decimal valor)
         {
+            if (valor <= 0)
+            {
+                throw new ArgumentException("O valor do depósito deve ser maior que zero.");
+            }
+
             _saldoConta += valor;
 
         }
 
         public decimal DescontarTaxa(decimal taxaManutencao)
         {
-            try
-            {
-                if (DateTime.Today >= UltimoDescontoTaxa.AddDays(30))
-                {
+            
                     if (SaldoConta >= taxaManutencao)
                     {
                         _saldoConta -= taxaManutencao;
-                        UltimoDescontoTaxa = DateTime.Today;
+                        
                         return taxaManutencao;
                     }
                     else
                     {
                         throw new InvalidOperationException("Saldo insuficiente para descontar a taxa de manutenção.");
                     }
-                }
-                else
-                {
-                    Console.WriteLine("Ainda não se passaram 30 dias desde o último desconto de taxa.");
-                    return 0;
-                }
-            }
-            catch (InvalidOperationException ex)
-            {
-                Console.WriteLine(ex.Message);
-                return 0;
-            }
+                
+                
         }
 
 
