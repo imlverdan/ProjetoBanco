@@ -59,7 +59,6 @@ namespace ProjetoBanco
             {
                 Cliente cliente = new Cliente();
 
-                while (true)
                 {
 
                     Console.WriteLine("CPF de cadastro (11 dígitos sem pontos ou traços): ");
